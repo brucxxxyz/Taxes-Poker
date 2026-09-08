@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>德州赢面助手</title>
+    <style>
+        /* ===== 全局 ===== */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f6f8fc;
+            color: #1e293b;
+            padding: 16px 14px 40px;
+            max-width: 480px;
+            margin: 0 auto;
+            min-height: 100vh;
+        }
+
+        /* ===== 标题 ===== */
+        .app-header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e9edf4;
+        }
+        .app-header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(145deg, #1e293b, #334155);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 1px;
+        }
+        .app-header .sub {
+            font-size: 14px;
+            color: #64748b;
+            margin-top: 2px;
+        }
+
+        /* ===== 卡片 ===== */
+        .card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 18px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid #eef2f6;
+        }
+        .card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .card-title .badge {
+            font-size: 12px;
+            background: #eef2f6;
+            padding: 2px 10px;
+            border-radius: 20px;
+            color: #475569;
+        }
+
+        /* ===== 槽位（手牌/公共牌） ===== */
+        .slot-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin: 4px 0;
+        }
+        .slot-btn {
+            width: 52px;
+            height: 72px;
+            border-radius: 10px;
+            border: 2px solid #d1d9e6;
+            background: #f8fafc;
+            font-size: 20px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1e293b;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+            user-select: none;
+        }
+        .slot-btn:active { transform: scale(0.92); }
+        .slot-btn.empty {
+            color: #b0c0d0;
+            border-style: dashed;
+        }
+        .slot-btn.filled {
+            border-color: #94a3b8;
+            background: #ffffff;
+        }
+        .slot-btn.spade, .slot-btn.club { color: #1a202c; }
+        .slot-btn.heart, .slot-btn.diamond { color: #e53e3e; }
+
+        /* ===== 牌库网格 ===== */
+        .deck-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(42px, 1fr));
+            gap: 5px;
+            margin-top: 6px;
+        }
+        .card-btn {
+            height: 44px;
+            border-radius: 6px;
+            border: 1px solid #d1d9e6;
+            background: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+        }
+        .card-btn:not(:disabled):hover {
+            background: #eef3f8;
+            border-color: #94a3b8;
+        }
+        .card-btn:active { transform: scale(0.92); }
+        .card-btn:disabled {
+            opacity: 0.2;
+            cursor: not-allowed;
+        }
+        .card-btn.spade, .card-btn.club { color: #1a202c; }
+        .card-btn.heart, .card-btn.diamond { color: #e53e3e; }
+
+        /* ===== 控制区 ===== */
+        .control-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px 24px;
+            justify-content: center;
+            margin: 8px 0 12px;
+        }
+        .control-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 14px;
+            color: #475569;
+        }
+        .control-item input[type="range"] {
+            width: 130px;
+            margin-top: 4px;
+            cursor: pointer;
+            accent-color: #3b82f6;
+        }
+        .control-value {
+            font-weight: 700;
+            color: #1e293b;
+            min-width: 30px;
+        }
+
+        .action-row {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .action-row button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.15s;
+            touch-action: manipulation;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+        }
+        .action-row button:active { transform: scale(0.94); }
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+        .btn-primary:hover { background: #2563eb; }
+        .btn-random {
+            background: #22c55e;
+            color: white;
+        }
+        .btn-random:hover { background: #16a34a; }
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #1e293b;
+        }
+        .btn-secondary:hover { background: #cbd5e1; }
+
+        /* ===== 输出区 ===== */
+        #output {
+            margin-top: 14px;
+            padding: 14px 12px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            text-align: center;
+            font-size: 15px;
+            line-height: 1.7;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        #output .hand-name {
+            font-weight: 700;
+            color: #1e293b;
+        }
+        #output .win { color: #22c55e; font-weight: 700; }
+        #output .tie { color: #f59e0b; font-weight: 700; }
+        #output .lose { color: #ef4444; font-weight: 700; }
+        #output .detail { font-size: 13px; color: #64748b; margin-top: 4px; }
+        #output .meta { font-size: 12px; color: #94a3b8; margin-top: 6px; }
+        .output-error { color: #ef4444; font-weight: 600; }
+
+        /* ===== 快速统计（折叠可选） ===== */
+        .quick-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            justify-content: center;
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 10px;
+        }
+        .quick-stats span {
+            background: #f1f5f9;
+            padding: 3px 10px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 420px) {
+            .slot-btn {
+                width: 44px;
+                height: 62px;
+                font-size: 17px;
+            }
+            .card-btn {
+                height: 38px;
+                font-size: 12px;
+            }
+            .deck-grid {
+                grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
+            }
+            .control-item input[type="range"] { width: 100px; }
+        }
+        @media (max-width: 360px) {
+            .slot-btn {
+                width: 38px;
+                height: 54px;
+                font-size: 14px;
+            }
+            .card-btn {
+                height: 32px;
+                font-size: 10px;
+            }
+            .deck-grid {
+                grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="app-header">
+        <h1>♠ 德州赢面助手</h1>
+        <div class="sub">选择手牌与公共牌，即时计算胜率</div>
+    </header>
+
+    <!-- 手牌 & 公共牌 -->
+    <div class="card">
+        <div class="card-title">
+            <span>🃏 手牌</span>
+            <span class="badge" id="heroCount">0 / 2</span>
+        </div>
+        <div class="slot-group" id="heroSlots"></div>
+
+        <div class="card-title" style="margin-top:16px;">
+            <span>📋 公共牌</span>
+            <span class="badge" id="boardCount">0 / 5</span>
+        </div>
+        <div class="slot-group" id="boardSlots"></div>
+    </div>
+
+    <!-- 牌库 -->
+    <div class="card">
+        <div class="card-title">
+            <span>📦 牌库（点击选牌）</span>
+            <span class="badge" id="deckRemain">52</span>
+        </div>
+        <div id="cardsGrid" class="deck-grid"></div>
+    </div>
+
+    <!-- 参数 & 操作 -->
+    <div class="card">
+        <div class="control-row">
+            <div class="control-item">
+                <span>👥 玩家数</span>
+                <div>
+                    <input type="range" id="playersRange" min="2" max="9" value="3">
+                    <span class="control-value" id="playersLabel">3</span>
+                </div>
+            </div>
+            <div class="control-item">
+                <span>⚡ 模拟次数</span>
+                <div>
+                    <input type="range" id="trialsRange" min="1000" max="50000" step="1000" value="10000">
+                    <span class="control-value" id="trialsLabel">10k</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="action-row">
+            <button class="btn-primary" id="calcBtn">📊 计算胜率</button>
+            <button class="btn-random" id="randomBtn">🎲 随机填牌</button>
+            <button class="btn-secondary" id="clearBtn">🗑️ 清空</button>
+        </div>
+
+        <div id="output">选择牌后点击“计算胜率”</div>
+    </div>
+
+    <script>
+        // ============================================================
+        //  工具：牌库生成
+        // ============================================================
+        const SUITS = ["♠","♥","♦","♣"];
+        const RANKS = ["A","K","Q","J","10","9","8","7","6","5","4","3","2"];
+
+        function createDeck() {
+            const deck = [];
+            for (const s of SUITS) {
+                for (const r of RANKS) {
+                    let cls = "spade";
+                    if (s === "♥") cls = "heart";
+                    if (s === "♦") cls = "diamond";
+                    if (s === "♣") cls = "club";
+                    deck.push({ rank: r, suit: s, class: cls });
+                }
+            }
+            return deck;
+        }
+
+        // ============================================================
+        //  状态管理
+        // ============================================================
+        // 7个槽位: 0,1 = 手牌; 2~6 = 公共牌
+        const state = [null, null, null, null, null, null, null];
+        const HERO_SLOTS = [0, 1];
+        const BOARD_SLOTS = [2, 3, 4, 5, 6];
+
+        // DOM 引用
+        const heroSlotsEl = document.getElementById('heroSlots');
+        const boardSlotsEl = document.getElementById('boardSlots');
+        const cardsGridEl = document.getElementById('cardsGrid');
+        const outputEl = document.getElementById('output');
+        const heroCountEl = document.getElementById('heroCount');
+        const boardCountEl = document.getElementById('boardCount');
+        const deckRemainEl = document.getElementById('deckRemain');
+
+        // ============================================================
+        //  渲染函数
+        // ============================================================
+        function renderSlots() {
+            heroSlotsEl.innerHTML = '';
+            for (let idx of HERO_SLOTS) {
+                const btn = document.createElement('button');
+                btn.className = 'slot-btn';
+                const card = state[idx];
+                if (card) {
+                    btn.textContent = card.rank + card.suit;
+                    btn.classList.add(card.class, 'filled');
+                } else {
+                    btn.textContent = '□';
+                    btn.classList.add('empty');
+                }
+                btn.dataset.idx = idx;
+                btn.addEventListener('click', () => {
+                    state[idx] = null;
+                    renderAll();
+                });
+                heroSlotsEl.appendChild(btn);
+            }
+
+            boardSlotsEl.innerHTML = '';
+            for (let idx of BOARD_SLOTS) {
+                const btn = document.createElement('button');
+                btn.className = 'slot-btn';
+                const card = state[idx];
+                if (card) {
+                    btn.textContent = card.rank + card.suit;
+                    btn.classList.add(card.class, 'filled');
+                } else {
+                    btn.textContent = '□';
+                    btn.classList.add('empty');
+                }
+                btn.dataset.idx = idx;
+                btn.addEventListener('click', () => {
+                    state[idx] = null;
+                    renderAll();
+                });
+                boardSlotsEl.appendChild(btn);
+            }
+
+            const heroCount = state.filter((c, i) => HERO_SLOTS.includes(i) && c).length;
+            const boardCount = state.filter((c, i) => BOARD_SLOTS.includes(i) && c).length;
+            heroCountEl.textContent = `${heroCount} / 2`;
+            boardCountEl.textContent = `${boardCount} / 5`;
+        }
+
+        function renderDeck() {
+            const deck = createDeck();
+            const used = new Set(state.filter(c => c).map(c => c.rank + c.suit));
+            cardsGridEl.innerHTML = '';
+            deck.forEach(card => {
+                const btn = document.createElement('button');
+                btn.className = `card-btn ${card.class}`;
+                btn.textContent = card.rank + card.suit;
+                const code = card.rank + card.suit;
+                btn.dataset.code = code;
+                btn.disabled = used.has(code);
+                btn.addEventListener('click', () => {
+                    const emptyIdx = state.findIndex(c => c === null);
+                    if (emptyIdx === -1) {
+                        alert('所有槽位已满，请先清除一张牌。');
+                        return;
+                    }
+                    state[emptyIdx] = card;
+                    renderAll();
+                });
+                cardsGridEl.appendChild(btn);
+            });
+            deckRemainEl.textContent = 52 - used.size;
+        }
+
+        function renderAll() {
+            renderSlots();
+            renderDeck();
+        }
+
+        // ============================================================
+        //  辅助：获取有效牌
+        // ============================================================
+        function getHero() { return state.filter((c, i) => HERO_SLOTS.includes(i) && c); }
+        function getBoard() { return state.filter((c, i) => BOARD_SLOTS.includes(i) && c); }
+
+        // ============================================================
+        //  评估器（德州扑克牌型）
+        // ============================================================
+        function evaluate7(cards) {
+            const rankValue = {
+                "A":14,"K":13,"Q":12,"J":11,"10":10,"9":9,"8":8,"7":7,
+                "6":6,"5":5,"4":4,"3":3,"2":2
+            };
+            const rankCount = {};
+            const suitCount = { "♠":0,"♥":0,"♦":0,"♣":0 };
+            cards.forEach(c => {
+                rankCount[c.rank] = (rankCount[c.rank] || 0) + 1;
+                suitCount[c.suit]++;
+            });
+
+            let flushSuit = null;
+            for (let s in suitCount) if (suitCount[s] >= 5) { flushSuit = s; break; }
+            let flushCardsAll = [];
+            if (flushSuit) flushCardsAll = cards.filter(c => c.suit === flushSuit);
+
+            const uniqueRanks = [...new Set(cards.map(c => rankValue[c.rank]))].sort((a,b)=>b-a);
+            if (uniqueRanks.includes(14)) uniqueRanks.push(1);
+            let straightHigh = null;
+            for (let i = 0; i <= uniqueRanks.length - 5; i++) {
+                if (uniqueRanks[i]-1===uniqueRanks[i+1] && uniqueRanks[i]-2===uniqueRanks[i+2] &&
+                    uniqueRanks[i]-3===uniqueRanks[i+3] && uniqueRanks[i]-4===uniqueRanks[i+4]) {
+                    straightHigh = uniqueRanks[i]; break;
+                }
+            }
+
+            let straightFlushHigh = null;
+            if (flushSuit && flushCardsAll.length >= 5) {
+                const fr = [...new Set(flushCardsAll.map(c => rankValue[c.rank]))].sort((a,b)=>b-a);
+                if (fr.includes(14)) fr.push(1);
+                for (let i = 0; i <= fr.length - 5; i++) {
+                    if (fr[i]-1===fr[i+1] && fr[i]-2===fr[i+2] &&
+                        fr[i]-3===fr[i+3] && fr[i]-4===fr[i+4]) {
+                        straightFlushHigh = fr[i]; break;
+                    }
+                }
+            }
+            if (straightFlushHigh) {
+                if (straightFlushHigh === 14) return { score: 9000000, name: "皇家同花顺" };
+                return { score: 8000000 + straightFlushHigh, name: "同花顺" };
+            }
+
+            for (let r in rankCount) if (rankCount[r] === 4)
+                return { score: 7000000 + rankValue[r], name: "四条" };
+
+            let triple = null, pair = null;
+            for (let r in rankCount) {
+                if (rankCount[r] === 3) if (!triple || rankValue[r] > rankValue[triple]) triple = r;
+            }
+            for (let r in rankCount) {
+                if (rankCount[r] >= 2 && r !== triple) if (!pair || rankValue[r] > rankValue[pair]) pair = r;
+            }
+            if (triple && pair)
+                return { score: 6000000 + rankValue[triple]*100 + rankValue[pair], name: "葫芦" };
+
+            if (flushSuit && flushCardsAll.length >= 5) {
+                const top = Math.max(...flushCardsAll.map(c => rankValue[c.rank]));
+                return { score: 5000000 + top, name: "同花" };
+            }
+
+            if (straightHigh) return { score: 4000000 + straightHigh, name: "顺子" };
+
+            if (triple) return { score: 3000000 + rankValue[triple], name: "三条" };
+
+            const pairs = Object.keys(rankCount).filter(r => rankCount[r] === 2);
+            if (pairs.length >= 2) {
+                pairs.sort((a,b)=>rankValue[b]-rankValue[a]);
+                return { score: 2000000 + rankValue[pairs[0]]*100 + rankValue[pairs[1]], name: "两对" };
+            }
+            if (pairs.length === 1) return { score: 1000000 + rankValue[pairs[0]], name: "一对" };
+
+            const high = Math.max(...cards.map(c => rankValue[c.rank]));
+            return { score: high, name: "高牌" };
+        }
+
+        // ============================================================
+        //  蒙特卡洛模拟
+        // ============================================================
+        function monteCarlo(hero, board, players, trials) {
+            let win = 0, tie = 0;
+
+            for (let t = 0; t < trials; t++) {
+                const deck = createDeck();
+                [...hero, ...board].forEach(c => {
+                    const idx = deck.findIndex(d => d.rank === c.rank && d.suit === c.suit);
+                    if (idx >= 0) deck.splice(idx, 1);
+                });
+                for (let i = deck.length - 1; i > 0; i--) {
+                    const j = (Math.random() * (i + 1)) | 0;
+                    [deck[i], deck[j]] = [deck[j], deck[i]];
+                }
+
+                const fullBoard = [...board];
+                while (fullBoard.length < 5) fullBoard.push(deck.pop());
+
+                const opponents = [];
+                for (let p = 0; p < players - 1; p++) {
+                    opponents.push([deck.pop(), deck.pop()]);
+                }
+
+                const heroEval = evaluate7([...hero, ...fullBoard]);
+                let best = null;
+                opponents.forEach(opp => {
+                    const e = evaluate7([...opp, ...fullBoard]);
+                    if (!best || e.score > best.score) best = e;
+                });
+
+                if (heroEval.score > best.score) win++;
+                else if (heroEval.score === best.score) tie++;
+            }
+
+            return { winRate: win / trials, tieRate: tie / trials };
+        }
+
+        // ============================================================
+        //  牌型详述
+        // ============================================================
+        function getHandDetail(hero, board, evalResult) {
+            const all = [...hero, ...board];
+            const rankValue = {
+                "A":14,"K":13,"Q":12,"J":11,"10":10,"9":9,"8":8,"7":7,
+                "6":6,"5":5,"4":4,"3":3,"2":2
+            };
+            const rankCount = {};
+            all.forEach(c => { rankCount[c.rank] = (rankCount[c.rank] || 0) + 1; });
+            const sortedRanks = Object.keys(rankCount).sort((a,b) => rankValue[b] - rankValue[a]);
+            const name = evalResult.name;
+
+            let detail = '';
+            if (name === "皇家同花顺") detail = 'A K Q J 10 同花';
+            else if (name === "同花顺") detail = '连续五张同花色';
+            else if (name === "四条") {
+                const r = sortedRanks.find(r => rankCount[r] === 4);
+                detail = `四条 ${r}`;
+            } else if (name === "葫芦") {
+                const triple = sortedRanks.find(r => rankCount[r] === 3);
+                const pair = sortedRanks.find(r => rankCount[r] >= 2 && r !== triple);
+                detail = `葫芦 ${triple} 带 ${pair}`;
+            } else if (name === "同花") detail = '五张同花色';
+            else if (name === "顺子") detail = '连续五张';
+            else if (name === "三条") {
+                const r = sortedRanks.find(r => rankCount[r] === 3);
+                detail = `三条 ${r}`;
+            } else if (name === "两对") {
+                const pairs = sortedRanks.filter(r => rankCount[r] === 2);
+                detail = `两对 ${pairs[0]} 和 ${pairs[1]}`;
+            } else if (name === "一对") {
+                const r = sortedRanks.find(r => rankCount[r] === 2);
+                detail = `一对 ${r}`;
+            } else if (name === "高牌") {
+                const high = sortedRanks[0];
+                detail = `高牌 ${high}`;
+            }
+            return detail;
+        }
+
+        // ============================================================
+        //  计算主函数
+        // ============================================================
+        function calculate() {
+            const hero = getHero();
+            const board = getBoard();
+
+            if (hero.length < 2) {
+                outputEl.innerHTML = '<span class="output-error">⚠️ 请至少选择 2 张手牌</span>';
+                return;
+            }
+
+            const players = parseInt(document.getElementById('playersRange').value);
+            const trials = parseInt(document.getElementById('trialsRange').value);
+
+            const heroEval = evaluate7([...hero, ...board]);
+            const result = monteCarlo(hero, board, players, trials);
+
+            const winPct = (result.winRate * 100).toFixed(1);
+            const tiePct = (result.tieRate * 100).toFixed(1);
+            const losePct = ((1 - result.winRate - result.tieRate) * 100).toFixed(1);
+            const detail = getHandDetail(hero, board, heroEval);
+
+            outputEl.innerHTML = `
+                <div><strong>手牌</strong> ${hero.map(c => c.rank+c.suit).join(' ')}  &nbsp;|&nbsp; <strong>公共牌</strong> ${board.map(c => c.rank+c.suit).join(' ') || '无'}</div>
+                <div style="margin-top:6px;">
+                    <span class="hand-name">${heroEval.name}</span>
+                    ${detail ? `（${detail}）` : ''}
+                </div>
+                <div style="margin-top:4px;">
+                    <span class="win">胜率 ${winPct}%</span>
+                    <span class="tie">平局 ${tiePct}%</span>
+                    <span class="lose">对手 ${losePct}%</span>
+                </div>
+                <div class="meta">模拟 ${trials.toLocaleString()} 次 · ${players} 人桌</div>
+            `;
+        }
+
+        // ============================================================
+        //  随机填牌
+        // ============================================================
+        function randomFill() {
+            const deck = createDeck();
+            for (let i = deck.length - 1; i > 0; i--) {
+                const j = (Math.random() * (i + 1)) | 0;
+                [deck[i], deck[j]] = [deck[j], deck[i]];
+            }
+            for (let i = 0; i < state.length; i++) state[i] = null;
+            state[0] = deck.pop();
+            state[1] = deck.pop();
+            for (let i = 2; i < 7; i++) {
+                state[i] = deck.pop();
+            }
+            renderAll();
+            calculate();
+        }
+
+        // ============================================================
+        //  清空
+        // ============================================================
+        function clearAll() {
+            for (let i = 0; i < state.length; i++) state[i] = null;
+            renderAll();
+            outputEl.innerHTML = '已清空，重新选择牌吧';
+        }
+
+        // ============================================================
+        //  初始化事件
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', function() {
+            const playersRange = document.getElementById('playersRange');
+            const trialsRange = document.getElementById('trialsRange');
+            const playersLabel = document.getElementById('playersLabel');
+            const trialsLabel = document.getElementById('trialsLabel');
+
+            playersRange.addEventListener('input', () => {
+                playersLabel.textContent = playersRange.value;
+            });
+            trialsRange.addEventListener('input', () => {
+                trialsLabel.textContent = parseInt(trialsRange.value).toLocaleString();
+            });
+
+            document.getElementById('calcBtn').addEventListener('click', calculate);
+            document.getElementById('randomBtn').addEventListener('click', randomFill);
+            document.getElementById('clearBtn').addEventListener('click', clearAll);
+
+            renderAll();
+            outputEl.innerHTML = '选择牌后点击“计算胜率”';
+        });
+    </script>
+    
+    <footer style="text-align:center;padding:16px 0 8px;color:#5b6b7c;font-size:13px;letter-spacing:0.5px;border-top:1px solid #e9edf4;margin-top:8px;">— Designed by BY —</footer>
+    
+</body>
+</html>
