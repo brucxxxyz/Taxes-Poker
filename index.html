@@ -222,6 +222,13 @@
         #output .meta { font-size: 12px; color: #94a3b8; margin-top: 6px; }
         .output-error { color: #ef4444; font-weight: 600; }
 
+        /* ===== 新增：输出框内花色颜色 ===== */
+        .card-inline {
+            font-weight: 600;
+        }
+        .card-inline.spade, .card-inline.club { color: #1a202c; }
+        .card-inline.heart, .card-inline.diamond { color: #e53e3e; }
+
         /* ===== 快速统计（折叠可选） ===== */
         .quick-stats {
             display: flex;
@@ -237,6 +244,17 @@
             padding: 3px 10px;
             border-radius: 12px;
             border: 1px solid #e2e8f0;
+        }
+
+        /* ===== 落款 ===== */
+        .footer {
+            text-align: center;
+            padding: 16px 0 8px;
+            color: #b0b8c4;
+            font-size: 13px;
+            letter-spacing: 0.5px;
+            border-top: 1px solid #e9edf4;
+            margin-top: 8px;
         }
 
         /* ===== 响应式 ===== */
@@ -329,6 +347,9 @@
 
         <div id="output">选择牌后点击“计算胜率”</div>
     </div>
+
+    <!-- 落款 -->
+    <footer class="footer">— Designed by BY —</footer>
 
     <script>
         // ============================================================
@@ -615,7 +636,7 @@
         }
 
         // ============================================================
-        //  计算主函数
+        //  计算主函数（修复：输出牌面花色着色）
         // ============================================================
         function calculate() {
             const hero = getHero();
@@ -637,8 +658,12 @@
             const losePct = ((1 - result.winRate - result.tieRate) * 100).toFixed(1);
             const detail = getHandDetail(hero, board, heroEval);
 
+            // 生成带花色颜色的牌面HTML
+            const heroCardsHtml = hero.map(c => `<span class="card-inline ${c.class}">${c.rank}${c.suit}</span>`).join(' ');
+            const boardCardsHtml = board.length > 0 ? board.map(c => `<span class="card-inline ${c.class}">${c.rank}${c.suit}</span>`).join(' ') : '无';
+
             outputEl.innerHTML = `
-                <div><strong>手牌</strong> ${hero.map(c => c.rank+c.suit).join(' ')}  &nbsp;|&nbsp; <strong>公共牌</strong> ${board.map(c => c.rank+c.suit).join(' ') || '无'}</div>
+                <div><strong>手牌</strong> ${heroCardsHtml}  &nbsp;|&nbsp; <strong>公共牌</strong> ${boardCardsHtml}</div>
                 <div style="margin-top:6px;">
                     <span class="hand-name">${heroEval.name}</span>
                     ${detail ? `（${detail}）` : ''}
@@ -704,8 +729,5 @@
             outputEl.innerHTML = '选择牌后点击“计算胜率”';
         });
     </script>
-    
-    <footer style="text-align:center;padding:16px 0 8px;color:#5b6b7c;font-size:13px;letter-spacing:0.5px;border-top:1px solid #e9edf4;margin-top:8px;">— Designed by BY —</footer>
-    
 </body>
 </html>
